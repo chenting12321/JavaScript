@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>this</title>
+</head>
+
+<body>
+    <div id="content" style="height: 200px;width:800px;margin:0 auto;background:#ccc;text-align: center;font-size: 50px;color: #fff;line-height:200px;">
+    </div>
+</body>
+
+</html>
+<script>
+  // 1 this
+  // 1-1说this之前先举两个例子
+  // 例1:
+  /* 
+  let obj = {
+    foo: function () {
+      console.log(1)
+    }
+  }
+  let foo1 = obj.foo // 定义成foo1方便和foo区分,可随便定义
+  console.log('foo1', foo1) // 打印出来foo是下面这个函数
+  // foo ƒ () {
+  //   console.log(1)
+  // }
+  obj.foo() // 写法一: 运行结果是1
+  foo1() // 写法二: 运行结果1
+  */
+  // 注解: 上面的obj.foo和foo1指向同一个函数,但是执行结果可能会不一样
+  
+  // 例2
+  /* let obj = {
+    foo: function () {
+      console.log(this.age)
+    },
+    age: 1
+  }
+  let foo1 = obj.foo
+  // console.log('foo1', foo1);
+  // ƒ () {
+  //   console.log(this.age)
+  // }
+  var age = 2 // 如果是let age = 2,foo1() 执行之后是undefined
+  obj.foo() // 1
+  foo1() // 2 */
+  /* 
+    这种差异主要在于: 函数体内部使用了this关键字, this指的是函数运行时所在的环境
+    对于obj.foo()来说,foo运行在obj的环境,所以this指向的是obj
+    对于foo1(),foo运行在全局环境,所以this指向的是全局环境
+    故两者运行结果不同
+  */
+  // 但是: 为什么obj.foo()就是载obj环境执行,一旦let foo1 = obj.foo,foo1() 就变成了在全局环境执行
+  //1-2: js 语言之所以有this的设计,跟内存里面的数据结构有关系
+  /* var obj = {
+    foo: 5
+  }
+  console.log(obj.foo); */
+  
+  // 上面的代码将一个对象赋值给变量obj,js引擎会先在内存里面生成一个对象 {foo: 5},然后把这个对象的内存地址赋值给变量obj
+  // 也就是说,变量obj是一个地址(reference),如果后面要读取obj.foo,引擎会先从obj拿到内存地址,然后再从该地址读出元素的对象,返回他的foo属性
+  // 原始的对象以字典结构保存,每一个属性名都对应一个属性描述对象,上面的foo属性,实际是以下面这种形式保存的
+  // 注:这一块不太懂,
+  // {
+  //   foo: {
+  //     [[value]]: 5
+  //     [[writable]]: true
+  //     [[enumerable]]: true
+  //     [[configurable]]: true
+  //   }
+  // }
+  // foo属性的值保存在属性描述对象的value属性里面
+
+  // 1-3: 如果属性的值是个函数
+  /* var obj = {
+    foo: function () {
+      console.log(1)
+    }
+  } */
+  // 这时,引擎会将函数单独保存在内存中,然后再将函数的地址赋值给foo属性的value属性
+  // {
+  //   foo: {
+  //     [[value]]: 函数的地址
+  //     [[writable]]: true
+  //     [[enumerable]]: true
+  //     [[configurable]]: true
+  //   }
+  // }
+  // 由于函数是一个单独的值,所以它可以在不同的环境(上下文)中执行
+  /* var fn = function () {
+    console.log(1)
+  }
+  var obj = {
+    fn: fn
+  }
+  fn() // 单独执行
+  obj.fn() // obj环境执行 */
+
+  // 1-4: 环境变量
+  // js允许在函数体内部引用当前环境变量的其他变量
+  /* var fn = function () {
+    console.log(x)
+  } */
+  // 函数体里面使用了变量x,该变量由运行环境提供
+  // 但是,由于函数可以在不同的运行环境执行,所以需要一种机制,能够在函数体内部获得当前的运行环境(context),所以this就出现了,它的设计目的就是再函数体内部,指代函数当前的运行环境
+  
+  /* var fn = function () {
+    console.log(this.x)
+  } */
+  // 函数体里面的this.x,就是指当前运行环境x
+
+  /* var fn1 = function () {
+    console.log('x:', this.x)
+    console.log('is-obj:', this === obj)
+    console.log('is-window:', this === window)
+  }
+  var x = 1
+  var obj = {
+    fn: fn1,
+    x: 2
+  }
+  fn1() // 单独执行 x: 1, is-obj: false,is-window: true
+  obj.fn() // obj环境执行 x: 2, is-obj: true,is-window: false
+  // 上面的函数fn1在全局环境执行,this.x执行的是全局环境的x,也就是var x = 1
+  // 在obj环境下,this.x指向的就是obj.x // 也就是x: 2
+  
+  // 按照我们上面说的this最终指向的是调用它的对象,这里的函数fn()实际是被Window对象所点出来的下面的代码就可以证明
+  window.fn1() // 相当于 fn1() */
+
+
+  // 小诀窍:当一个函数被调用时,应该立马看()左边的部分
+  // 如果()左边是一个引用(reference),那么,函数的this指向的就是这个引用所属的对象
+  // 否则this指向的就是全局对象(window|global)
+  // fn1(), 我们先看()的左边，是fn1,fn1属于全局对象，所以this指向的就是全局对象
+  // obj.fn(), 我们先看()的左边，是fn,fn属于obj对象，所以this指向的就是obj
+
+
+// 总结: obj.foo()是通过obj找到的foo,所以就是在obj环境执行,一旦var foo1 = obj.foo,变量 foo1 就直接指向函数本身,foo1()就变成在全局环境执行
+
+
+// 2, this是什么
+
+//2-1, 关于js中的this，记住谁调用，this就指向谁;要访问闭包的this，要定义个变量缓存下来。一般喜欢var _this = this
+
+// console.log('1:', window) // 这两个指向是一样的,指向window
+// console.log('2:', this) // 这两个指向是一样的指向window
+// let number = 1
+// let content = document.getElementById('content');
+
+// let abc = function(){ 
+//   console.log('2', this); // 指向window,匿名函数的this一般指向window
+// };
+// abc()
+// function count() {
+//   content.innerHTML = number++
+//   console.log('3', this); // 开始指向window,如果被执行之后,指向id=content的div
+// }
+// // count()
+// function debounce(func, wait) {
+//   console.log('4', this); // window
+//   return function() {
+//     console.log('5', this); // div
+//   }
+// }
+// content.onmousemove = debounce(count, 1000)
+// 普通函数调用指向全局对象window
+
+// 2-2, this在全局作用于中,在全局作用域中,this的指向就是全局变量
+// 在浏览器中指向window对象,在node.js里面执行global对象
+/* a = 'aaa'
+console.log(a) // aaa
+this.a = 'bbb'
+console.log(a) // bbb */
+
+// 3 this的四种绑定规则
+// 默认绑定、隐式绑定、显示绑定、new 绑定。优先级从低到高
+// 3-1默认绑定:全局环境中，this默认绑定到window,函数独立调用时，this默认绑定到window,被嵌套的函数独立调用时，this默认绑定到window
+// 3-1-1
+// console.log(this === window) // true
+// 3-1-2
+/* let p = 4
+function fun () {
+  // "use strict"; // 严格模式下会报错: Uncaught TypeError: Cannot read property 'n' of undefined
+  console.log('默认绑定:', this.n)
+  console.log('let m:', this.m)
+  console.log('let p:', this.p)
+}
+var n = 2
+let m = 3
+fun() // 2,undefined,undefined */
+
+// 3-1-3
+/* var b = 0
+var obj = {
+  b: 2,
+  foo: function () {
+    console.log('foo', this.b) // foo 2
+    let _this = this
+    function test () {
+      console.log('_this', _this) // 由于闭包的this默认绑定到window对象,但又常常需要访问嵌套函数的this,所以常常在嵌套函数中使用var that = this(或者 _this = this),然后在闭包中使用that替代this,使用作用域查找的方法来找到嵌套函数的this值 
+      console.log('is test:', this === window) // true
+      console.log('test', this.b) // test 0
+    }
+    test() // 虽然test()函数被嵌套在obj.foo()函数中,但test()函数是独立调用,而不是方法调用,所以this默认绑定到window
+  }
+}
+obj.foo() // test 0 */
+
+// 3-1-4 IIFE立即执行函数实际上是函数声明后直接调用执行
+// IIFE(立即调用函数表达式)是一个在定义时就会立即执行的 JavaScript 函数
+/* var b = 0 // 写法1
+function foo(){
+  (function test(){ // 立即执行函数,也是指向window,所以是默认绑定
+    console.log('is test:', this === window) // true
+    console.log('test', this.b)
+  })()
+}
+var obj = {
+    c: b,
+    foo: foo
+}
+obj.foo() // 0 */
+
+// 等价于上面的写法
+/* var b = 0 // 写法2
+var obj = {
+  b: 2,
+  foo: function () { // 
+    (function test () {
+      console.log('is test:', this === window) // true
+      console.log('test', this.b) // test 0
+    })()
+  }
+}
+obj.foo() */
+
+
+// 3-1-5闭包
+/* var a = 0
+function foo1 () {
+  // console.log('foo', this.a) // 2
+  let _this = this
+  function test () {
+    console.log('_this', _this) // obj
+    console.log('is test:', this === window) // true
+    console.log('test', this.a)
+  }
+  return test
+}
+var obj = {
+  a: 2,
+  foo: foo1
+}
+// obj.foo() // foo 2
+obj.foo()() // is test: true ,test 0 */
+// 由于闭包的this默认绑定到window对象,但又常常需要访问嵌套函数的this,所以常常在嵌套函数中使用var that = this(或者 _this = this),然后在闭包中使用that替代this,使用作用域查找的方法来找到嵌套函数的this值 
+
+// 3-2 隐式绑定:this隐式绑定到该直接对象
+
+// 3-2-1
+/* function foo1 () {
+  console.log('window', this === window)
+  console.log('obj1', this === obj1)
+  console.log('foo', this.a)
+}
+let obj1 = {
+  a: 1,
+  foo: foo1,
+  obj2: {
+    a: 2,
+    foo: foo1
+  }
+}
+
+obj1.foo() //false, true, 1, 函数的直接对象是obj1，this隐式绑定到obj1
+obj1.obj2.foo() // false, false, 2, foo()函数的直接对象是obj2，this隐式绑定到obj2 console.log('obj2', this === obj2) */
+
+// 3-2-2,隐式丢失,是指被隐式绑定的函数 丢失绑定对象,从而默认绑定到window
+// 3-2-2-1,函数别名
+/* var a = 0
+function foo1 () {
+  console.log('this', this === window) // true
+  console.log('foo1', this.a)
+}
+var obj = {
+  a: 2,
+  foo: foo1
+}
+var bar = obj.foo // 把obj.foo赋予别名bar,造成了隐式丢失,引入只是吧foo1() 函数赋值给了bar,而bar与obj对象毫无关系
+bar() // foo1  0 */
+// 上面函数等价于
+/* var a = 0
+var bar = function foo1 () {
+  console.log('this', this === window) // true
+  console.log('foo1', this.a);
+}
+bar() // true, 0 */
+
+// 3-2-2-2:参数传递
+/* var a = 0
+function foo1 () {
+  console.log('this', this === window) // true
+  console.log('foo1', this.a)
+}
+function bar (fn) {
+  fn()
+}
+var obj = {
+  a: 2,
+  foo: foo1
+}
+bar(obj.foo) // true, 0 // 把obj.foo当作参数 传递给bar函数是,有隐式的函数赋值 fn = obj.foo,与上面类似,只是把foo1函数赋值给了fn,而fn与obj对象毫无关系 */
+
+// 上面函数等价于
+/* var a = 0
+function bar(fn) {
+  console.log('this', this === window) // true
+  fn()
+}
+bar(function foo1() {
+  console.log('foo1', this.a) // 0
+}) */
+
+// 3-2-2-3:内置函数
+/* var a = 0
+function foo1 () {
+  console.log('this', this === window)
+  console.log('foo1', this.a)
+}
+var obj = {
+  a: 2,
+  foo: foo1
+}
+setTimeout(obj.foo, 100) // true, 0 */
+// 等价于
+/* var a = 0
+setTimeout(function foo1 () {
+  console.log('this', this === window)
+  console.log('foo1', this.a)
+}, 100) */
+
+// 3-2-2-4:间接引用
+// 函数的"间接引用"一般都在无意间创建,最容易在赋值时发生,会造成隐式丢失
+
+/* function foo1() {
+  console.log(this.a)
+}
+var a = 2
+var obj = {
+  a: 3,
+  foo: foo1
+}
+var p = {
+  a: 4
+}
+obj.foo() // 3
+console.log(obj.foo); // foo1函数 TODO: 这个去掉下面(p.foo = obj.foo)()这个就会报错,不知道为什么?
+// //将o.foo函数赋值给p.foo函数,然后立即执行,相当于仅仅是foo()函数的立即执行
+(p.foo = obj.foo)() // 2 */
+
+/* function foo1() {
+  console.log( this.a )
+}
+var a = 2
+var o = { a: 3, foo: foo1 }
+var p = { a: 4 }
+o.foo(); // 3
+//将o.foo函数赋值给p.foo函数，之后p.foo函数再执行，是属于p对象的foo函数的执行
+p.foo = o.foo
+p.foo() // 4 */
+
+//3-2-2-5:其他情况
+/* var a = 0
+var obj = {
+  a: 2,
+  foo: foo1
+}
+function foo1 () {
+  console.log(this.a);
+}
+// (obj.foo = obj.foo)() // 0
+// (false || obj.foo)() // 0
+(1, obj.foo)() // 0 */
+
+//3-2-2: 显示绑定:通过call()、apply()、bind()方法把对象绑定到this上,叫做显式绑定,对于被调用的函数来说,叫做间接调用
+// call()、apply()这两个方法是如何工作呢,他们第一个参数是一个对象,他们会把 this 指向这个对象
+// 如果传入的是原始值(字符串类型、布尔类型、或者数字类型),那么这个原始值会被转换成它的对象形式,也就是（new String(),new Boolean(),new Number）,这通常被称作 装箱。
+// 3-2-2-1,通过call()显示绑定(普通的显式绑定无法解决隐式丢失问题)
+/* var a = 0
+function foo1 () {
+  console.log('this', this === window)
+  console.log(this.a)
+}
+var obj = {
+  a: 2
+}
+// foo1() // true, 0
+foo1.call(obj) // false, 2 */ 
+
+/* var a = 0
+function foo1() {
+  console.log(this === window)
+  console.log(this.a)
+}
+var obj1 = {
+  a: 1
+}
+var obj2 = {
+  a: 2
+}
+foo1.call(obj1) // false, 1
+foo1.call(obj2) // false, 2 */
+
+// 3-2-2-2:硬绑定:显示绑定的一个变种
+/* var a = 0
+function foo1() {
+  console.log('foo1:', this === window)
+  console.log(this.a)
+}
+var obj = {
+  a: 2
+}
+var bar = function() {
+  console.log('bar:', this === window)
+  foo1.call(obj) // 在bar函数内部手动调用foo.call(obj),因此,无论之后如何调用函数bar,它总会手动在obj上调用foo1
+}
+bar.call(window) // bar:true, foo1: false, 2
+setTimeout(bar,100) // bar:true, foo1: false, 2 */
+
+// bind()绑定
+/* function foo(something) {
+  console.log(this.a, something)
+  console.log(this === window)
+  return this.a + something
+}
+var obj = {
+  a: 2
+}
+var bar = foo.bind(obj);
+// console.log(bar) // 函数foo
+bar('who') // 2 who false
+var b = bar(3); // 2 3 false
+console.log(b); // 5 */
+// bind 会返回一个新的函数,它会把参数设置为 this 的上下文并调用原始函数
+
+
+// 3-2-2-3: js新增内置函数,具有显示绑定功能,如数组的5个迭代方法:map(),forEach(),filter(),some(),every()
+/* var a = 'window'
+function foo(el){
+  console.log(el, this.a)
+}
+var obj = {
+    a: 'fn'
+}
+var arr = [1,2,3]
+arr.forEach(el => {
+  foo(el)
+}) // 1 "window" 2 "window" 3 "window"
+arr.forEach(foo) // 1 "window" 2 "window" 3 "window"
+arr.forEach(foo, obj) // 1 "fn" 2 "fn" 3 "fn" */
+
+// 3-2-3: new绑定
+// 如果函数或者方法调用之前带有关键字new,它就构成 构造函数 调用,对于this绑定来说,就是new绑定
+
+// 3-2-3-1
+// 构造函数通常不使用return关键字,它们通常初始化新对象,当构造函数的函数体执行完毕时,它会显式返回,在这种情况下,构造函数调用表达式的计算结果就是这个新对象的值
+/* function fn() {
+  console.log(this)
+  this.a = 2
+}
+var test = new fn()
+console.log(test) // fn {}, fn {a: 2} */
+
+// 如果构造函数使用return语句但是没有指定返回值,或者返回一个原始值,那么这时将忽略返回值,同时使用这个新对象作为调用结果
+/* var a = 0
+var obj = {
+  a: 1
+}
+function fn () {
+  this.a = 2
+  return
+}
+var test = new fn()
+console.log(test) // {a: 2} */
+
+// 如果构造函数显式的使用return语句返回一个对象,那么调用表达式的值就是这个对象
+/* var obj = {
+  a: 1
+}
+function fn () {
+  console.log(this) // fn {}
+  this.a = 2
+  return obj
+}
+var test = new fn()
+console.log(test) // {a: 1} */
+
+// 3-2-4严格模式
+// 1,严格模式下,独立调用函数的this指向undefined
+/* function fn1() {
+  'use strict';
+  console.log(this)
+}
+function fn2() {
+  console.log(this);
+}
+fn1() // undefined
+fn2() // window */
+
+// 2,在非严格模式下,使用函数的call()和apply方法时,null或者undefined值会被转换成全局对象,而在严格模式下,函数的this值始终是指定的值
+/* var a = 1
+function foo() {
+  console.log(this)
+  console.log(this.a)
+}
+foo.call(null) // window, 1
+// foo.call(undefined) // window, 1
+// foo.call() // window, 1
+// foo.call('') // String {""}, undefined */
+
+var a = 1
+function foo() {
+  'use strict'
+  console.log(this) // null
+  console.log(this.a)
+}
+foo.call(null) // null, Cannot read property 'a' of null
+// foo.call(undefined) // undefined, Cannot read property 'a' of null
+// foo.call() // undefined, Cannot read property 'a' of null
+
+</script>
