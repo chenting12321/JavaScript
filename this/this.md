@@ -196,107 +196,107 @@ window.fn1() // 相当于 fn1()
 
 #### 1, 全局环境中，this默认绑定到window
 
-    ```js
-    // 全局环境中
-    console.log(this === window) // true
-    ```
+```js
+// 全局环境中
+console.log(this === window) // true
+```
 
 #### 2, 函数独立调用时,this默认绑定到window
 
-    ```js
-    let p = 4
-    function fun () {
-      // "use strict"; // 严格模式下会报错: Uncaught TypeError: Cannot read property 'n' of undefined
-      console.log('默认绑定:', this.n)
-      console.log('let m:', this.m) // undefined
-      console.log('let p:', this.p) // undefined
-    }
-    var n = 2
-    let m = 3
-    fun() // 2,undefined,undefined */
-    ```
+```js
+let p = 4
+function fun () {
+  // "use strict"; // 严格模式下会报错: Uncaught TypeError: Cannot read property 'n' of undefined
+  console.log('默认绑定:', this.n)
+  console.log('let m:', this.m) // undefined
+  console.log('let p:', this.p) // undefined
+}
+var n = 2
+let m = 3
+fun() // 2,undefined,undefined */
+```
 
 #### 3, 被嵌套的函数独立调用时,this默认绑定到window
 
-    ```js
-    var b = 0
-    var obj = {
-      b: 2,
-      foo: function () {
-        console.log('foo', this.b) // foo 2
-        let _this = this
-        function test () {
-          console.log('_this', _this) // obj
-          // 由于闭包的this默认绑定到window对象,但又常常需要访问嵌套函数的this
-          // 所以常常在嵌套函数中使用var that = this(或者 _this = this)
-          // 然后在闭包中使用that替代this,使用作用域查找的方法来找到嵌套函数的this值 
-          console.log('is test:', this === window) // true
-          console.log('test', this.b) // test 0
-        }
-        test() // 虽然test()函数被嵌套在obj.foo()函数中,但test()函数是独立调用,而不是方法调用,所以this默认绑定到window
-      }
+```js
+var b = 0
+var obj = {
+  b: 2,
+  foo: function () {
+    console.log('foo', this.b) // foo 2
+    let _this = this
+    function test () {
+      console.log('_this', _this) // obj
+      // 由于闭包的this默认绑定到window对象,但又常常需要访问嵌套函数的this
+      // 所以常常在嵌套函数中使用var that = this(或者 _this = this)
+      // 然后在闭包中使用that替代this,使用作用域查找的方法来找到嵌套函数的this值 
+      console.log('is test:', this === window) // true
+      console.log('test', this.b) // test 0
     }
-    obj.foo() // test 0
-    ```
+    test() // 虽然test()函数被嵌套在obj.foo()函数中,但test()函数是独立调用,而不是方法调用,所以this默认绑定到window
+  }
+}
+obj.foo() // test 0
+```
 
 
 #### 4, IIFE立即执行函数实际上是函数声明后直接调用执行
 
     IIFE(立即调用函数表达式)是一个在定义时就会立即执行的 JavaScript 函数
     
-    ```js
-    // 写法1
-    var b = 0
-    function foo(){
-      (function test(){ // 立即执行函数,也是指向window,所以是默认绑定
-        console.log('is test:', this === window) // true
-        console.log('test', this.b)
-      })()
-    }
-    var obj = {
-        c: b,
-        foo: foo
-    }
-    obj.foo() // 0
-    ```
-    
-    ```js
-    // 写法2,等价于写法1
-    var b = 0
-    var obj = {
-      b: 2,
-      foo: function () { // 
-        (function test () {
-          console.log('is test:', this === window) // true
-          console.log('test', this.b) // test 0
-        })()
-      }
-    }
-    obj.foo()
-    ```
+```js
+// 写法1
+var b = 0
+function foo(){
+  (function test(){ // 立即执行函数,也是指向window,所以是默认绑定
+    console.log('is test:', this === window) // true
+    console.log('test', this.b)
+  })()
+}
+var obj = {
+    c: b,
+    foo: foo
+}
+obj.foo() // 0
+```
+
+```js
+// 写法2,等价于写法1
+var b = 0
+var obj = {
+  b: 2,
+  foo: function () { // 
+    (function test () {
+      console.log('is test:', this === window) // true
+      console.log('test', this.b) // test 0
+    })()
+  }
+}
+obj.foo()
+```
 
 
 #### 5, 闭包
 
-    ```js
-    var a = 0
-    function foo1 () {
-      console.log('foo', this.a) // 2
-      let _this = this
-      function test () {
-        console.log('_this', _this) // obj
-        console.log('is test:', this === window) // true
-        console.log('test', this.a)
-      }
-      return test
-    }
-    var obj = {
-      a: 2,
-      foo: foo1
-    }
-    // obj.foo() // foo 2
-    obj.foo()() // is test: true ,test 0
-    ```
+```js
+var a = 0
+function foo1 () {
+  console.log('foo', this.a) // 2
+  let _this = this
+  function test () {
+    console.log('_this', _this) // obj
+    console.log('is test:', this === window) // true
+    console.log('test', this.a)
+  }
+  return test
+}
+var obj = {
+  a: 2,
+  foo: foo1
+}
+// obj.foo() // foo 2
+obj.foo()() // is test: true ,test 0
+```
 
 ### 3-2, 隐式绑定(this隐式绑定到该直接对象)
 
@@ -334,28 +334,28 @@ obj1.obj2.foo() // false, false, 2, foo()函数的直接对象是obj2，this隐�
 
 ```js
 // 法1
-    var a = 0
-    function foo1 () {
-      console.log('this', this === window) // true,隐式丢失,绑定到window上了
-      console.log('foo1', this.a)
-    }
-    var obj = {
-      a: 2,
-      foo: foo1
-    }
-    var bar = obj.foo // 函数别名
-    // 把obj.foo赋予别名bar,造成了隐式丢失,只是把foo1()函数赋值给了bar,而bar与obj对象毫无关系
-    bar() // foo1  0
+var a = 0
+function foo1 () {
+  console.log('this', this === window) // true,隐式丢失,绑定到window上了
+  console.log('foo1', this.a)
+}
+var obj = {
+  a: 2,
+  foo: foo1
+}
+var bar = obj.foo // 函数别名
+// 把obj.foo赋予别名bar,造成了隐式丢失,只是把foo1()函数赋值给了bar,而bar与obj对象毫无关系
+bar() // foo1  0
 ```
 
 ```js
 // 法2(等价于上面法1)
-    var a = 0
-    var bar = function foo1 () {
-      console.log('this', this === window) // true
-      console.log('foo1', this.a)
-    }
-    bar() // true, 0
+var a = 0
+var bar = function foo1 () {
+  console.log('this', this === window) // true
+  console.log('foo1', this.a)
+}
+bar() // true, 0
     
 ```
     
@@ -605,7 +605,7 @@ function foo() {
 foo.call(null) // window, 1
 // foo.call(undefined) // window, 1
 // foo.call() // window, 1
-// foo.call('') // String {""}, undefined
+// foo.call('') // String {""}, undefined
 ```
 ####  2, 非严格模式下,使用函数call()火apply()方法时,null或者undefined值会被转换成全局对象,而在严格模式下,函数的this始终是指定的值
 
